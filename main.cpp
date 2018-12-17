@@ -14,7 +14,6 @@ private:
 	int all_line[9][9] = { 3, 9, 8, 7, 6, 5, 4, 2, 1 };
 	int count = 0;
 	int sum;
-	clock_t start, end;
 	ofstream generate_file;
 
 	void move_line(int a[9], int b[9], int num)
@@ -29,25 +28,25 @@ private:
 		{
 			for (int j = 0; j < 8; j++)
 			{
-				generate_file << all_line[order[i]][j] << ' ';
+				putchar(all_line[order[i]][j] + '0');
+				putchar(' ');
 			}
-			generate_file << all_line[order[i]][8] << '\n';
+			putchar(all_line[order[i]][8] + '0');
+			putchar('\n');
 		}
 		for (int j = 0; j < 8; j++)
 		{
-			generate_file << all_line[order[8]][j] << ' ';
+			putchar(all_line[order[8]][j] + '0');
+			putchar(' ');
 		}
-		generate_file << all_line[order[8]][8];
+		putchar(all_line[order[8]][8] + '0');
 		count++;
 		if (count == sum)
 		{
 			generate_file.close();
-			end = clock();
-			double duration = (double)(end - start) / CLOCKS_PER_SEC;
-			printf("%f seconds/n", duration);
 			exit(0);
 		}
-		generate_file << '\n' << '\n';
+		putchar('\n'); putchar('\n');
 	}
 
 	void generate_sudoku()
@@ -79,10 +78,9 @@ private:
 public:
 	GenerateSudoku(int sum)
 	{
-		start = clock();
 		count = 0;
 		this->sum = sum;
-		generate_file.open("sudoku.txt", ios::out);
+		freopen("sudoku.txt", "w", stdout);
 		generate_sudoku();
 	}
 };
