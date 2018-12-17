@@ -152,6 +152,13 @@ private:
 	bool column[9][9];
 	bool grid[9][9];
 	ifstream puzzle_file;
+	struct point
+	{
+		int x;
+		int y;
+		int n_sum;
+	};
+	vector<point> possible_num_vector;
 
 	void write_into_file()
 	{
@@ -179,49 +186,56 @@ private:
 		}
 	}
 
-	bool solve_puzzle(int i, int j)
+	bool solve_puzzle(int index)
 	{
-		while (puzzle[i][j] != 0)
+		if (index == possible_num_vector.size())
 		{
-			if (j < 8) j = j + 1;
-			else if (i < 8)
-			{
-				j = 0;
-				i = i + 1;
-			}
-			else if (i == 8)
-			{
-				write_into_file();
-				return true;
-			}
+			write_into_file();
+			return true;
 		}
+		int i = possible_num_vector[index].x;
+		int j = possible_num_vector[index].y;
 		for (int x = 1; x <= 9; x++)
 		{
 			if (!row[i][x - 1] && !column[j][x - 1] && !grid[i / 3 * 3 + j / 3][x - 1])
 			{
 				puzzle[i][j] = x;
 				row[i][x - 1] = column[j][x - 1] = grid[i / 3 * 3 + j / 3][x - 1] = true;
-				if (j < 8)
-				{
-					int r = solve_puzzle(i, j + 1);
-					if (r) return true;
-					else row[i][x - 1] = column[j][x - 1] = grid[i / 3 * 3 + j / 3][x - 1] = false;
-				}
-				else if (i < 8)
-				{
-					int	r = solve_puzzle(i + 1, 0);
-					if (r) return true;
-					else row[i][x - 1] = column[j][x - 1] = grid[i / 3 * 3 + j / 3][x - 1] = false;
-				}
-				else if (i == 8)
-				{
-					write_into_file();
-					return true;
-				}
+				bool r = solve_puzzle(index + 1);
+				if (r) return true;
+				else row[i][x - 1] = column[j][x - 1] = grid[i / 3 * 3 + j / 3][x - 1] = false;
 			}
 		}
 		puzzle[i][j] = 0;
 		return false;
+	}
+
+	void generate_possible_num_vector()
+	{
+		for (int x = 0; x < 9; x++)
+		{
+			for (int y = 0; y < 9; y++)
+			{
+				if (puzzle[x][y] != 0) continue;
+				point p;
+				p.x = x;
+				p.y = y;
+				p.n_sum = 9;
+				for (int i = 0; i < 9; i++)
+				{
+					if (row[x][i] || column[y][i] || grid[x / 3 * 3 + y / 3][i])
+						p.n_sum--;
+				}
+				possible_num_vector.push_back(p);
+			}
+		}
+	}
+
+	static bool less_sort(const point &a, const point &b)
+	{
+		if (a.n_sum != b.n_sum) return (a.n_sum < b.n_sum);
+		else if (a.x != b.x)return (a.x < b.x);
+		else return (a.y < b.y);
 	}
 
 	void input_puzzle()
@@ -237,6 +251,7 @@ private:
 			memset(row, false, sizeof(row));
 			memset(column, false, sizeof(column));
 			memset(grid, false, sizeof(grid));
+			possible_num_vector.clear();
 			for (int i = 0; i < 9; i++)
 			{
 				for (int j = 0; j < 9; j++)
@@ -250,7 +265,9 @@ private:
 					}
 				}
 			}
-			solve_puzzle(0, 0);
+			generate_possible_num_vector();
+			sort(possible_num_vector.begin(), possible_num_vector.end(), less_sort);
+			solve_puzzle(0);
 			first = false;
 		}
 		ch[ch_index] = '\0';
