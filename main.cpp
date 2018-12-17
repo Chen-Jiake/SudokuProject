@@ -1,4 +1,5 @@
 #include<cstdio>
+#include<iostream>
 #include<string>
 #include<cstdlib>
 #include<fstream>
@@ -14,7 +15,8 @@ private:
 	int all_line[9][9] = { 3, 9, 8, 7, 6, 5, 4, 2, 1 };
 	int count = 0;
 	int sum;
-	ofstream generate_file;
+	char ch[165];
+	int ch_index = 0;
 
 	void move_line(int a[9], int b[9], int num)
 	{
@@ -28,22 +30,25 @@ private:
 		{
 			for (int j = 0; j < 8; j++)
 			{
-				putchar(all_line[order[i]][j] + '0');
-				putchar(' ');
+				ch[ch_index++] = all_line[order[i]][j] + '0';
+				ch[ch_index++] = ' ';
 			}
-			putchar(all_line[order[i]][8] + '0');
-			putchar('\n');
+			ch[ch_index++] = all_line[order[i]][8] + '0';
+			ch[ch_index++] = '\n';
 		}
 		for (int j = 0; j < 8; j++)
 		{
-			putchar(all_line[order[8]][j] + '0');
-			putchar(' ');
+			ch[ch_index++] = all_line[order[8]][j] + '0';
+			ch[ch_index++] = ' ';
 		}
-		putchar(all_line[order[8]][8] + '0');
+		ch[ch_index++] = all_line[order[8]][8] + '0';
+		ch[ch_index] = '\0';
+		ch_index = 0;
+		cout << ch;
 		count++;
 		if (count == sum)
 		{
-			generate_file.close();
+			fclose(stdout);
 			exit(0);
 		}
 		putchar('\n'); putchar('\n');
@@ -62,16 +67,21 @@ private:
 			move_line(all_line[6], all_line[0], 2);
 			move_line(all_line[7], all_line[0], 5);
 			move_line(all_line[8], all_line[0], 8);
-			int order[9] = { 0, 1, 2, 5, 4, 3, 8, 7, 6 };
+			int order1[9] = { 0, 1, 2, 5, 4, 3, 8, 7, 6 };
+			int order2[9] = { 0, 1, 2, 8, 7, 6, 5, 4, 3 };
 			for (int i = 0; i < 6; i++)
 			{
-				next_permutation(order + 3, order + 6);
+				next_permutation(order1 + 3, order1 + 6);
+				next_permutation(order2 + 3, order2 + 6);
 				for (int j = 0; j < 6; j++)
 				{
-					next_permutation(order + 6, order + 9);
-					write_into_file(order);
-				}				
+					next_permutation(order1 + 6, order1 + 9);
+					next_permutation(order2 + 6, order2 + 9);
+					write_into_file(order1);
+					write_into_file(order2);
+				}
 			}
+
 		}
 	}
 
@@ -198,7 +208,7 @@ private:
 		bool first = true;
 		while (!puzzle_file.eof())
 		{
-			if(!first) answer_file << '\n' << '\n';
+			if (!first) answer_file << '\n' << '\n';
 			if (line_count != 0) answer_file << endl;
 			for (int i = 0; i < 9; i++)
 			{
