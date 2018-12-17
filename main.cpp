@@ -15,43 +15,91 @@ private:
 	int all_line[9][9] = { 3, 9, 8, 7, 6, 5, 4, 2, 1 };
 	int count = 0;
 	int sum;
-	char ch[165];
+	char ch[10100];
 	int ch_index = 0;
-
+	int order1[2][2] = { 1, 2,
+						 2, 1 };
+	int order2[6][3] = { 3, 4, 5,
+						 3, 5, 4,
+						 4, 3, 5,
+						 4, 5, 3,
+						 5, 3, 4,
+						 5, 4, 3 };
+	int order3[6][3] = { 6, 7, 8,
+						 6, 8, 7,
+						 7, 6, 8,
+						 7, 8, 6,
+						 8, 6, 7,
+						 8, 7, 6 };
 	void move_line(int a[9], int b[9], int num)
 	{
 		for (int i = 0; i < 9; i++)
 			a[(i + num) % 9] = b[i];
 	}
 
-	void write_into_file(int order[9])
+	void write_into_file(int order1[2], int order2[3], int order3[3])
 	{
-		for (int i = 0; i < 8; i++)
+		for (int j = 0; j < 8; j++)
+		{
+			ch[ch_index++] = all_line[0][j] + '0';
+			ch[ch_index++] = ' ';
+		}
+		ch[ch_index++] = all_line[0][8] + '0';
+		ch[ch_index++] = '\n';
+		for (int i = 0; i < 2; i++)
 		{
 			for (int j = 0; j < 8; j++)
 			{
-				ch[ch_index++] = all_line[order[i]][j] + '0';
+				ch[ch_index++] = all_line[order1[i]][j] + '0';
 				ch[ch_index++] = ' ';
 			}
-			ch[ch_index++] = all_line[order[i]][8] + '0';
+			ch[ch_index++] = all_line[order1[i]][8] + '0';
+			ch[ch_index++] = '\n';
+		}
+		for (int i = 0; i < 3; i++)
+		{
+			for (int j = 0; j < 8; j++)
+			{
+				ch[ch_index++] = all_line[order2[i]][j] + '0';
+				ch[ch_index++] = ' ';
+			}
+			ch[ch_index++] = all_line[order2[i]][8] + '0';
+			ch[ch_index++] = '\n';
+		}
+		for (int i = 0; i < 2; i++)
+		{
+			for (int j = 0; j < 8; j++)
+			{
+				ch[ch_index++] = all_line[order3[i]][j] + '0';
+				ch[ch_index++] = ' ';
+			}
+			ch[ch_index++] = all_line[order3[i]][8] + '0';
 			ch[ch_index++] = '\n';
 		}
 		for (int j = 0; j < 8; j++)
 		{
-			ch[ch_index++] = all_line[order[8]][j] + '0';
+			ch[ch_index++] = all_line[order3[2]][j] + '0';
 			ch[ch_index++] = ' ';
 		}
-		ch[ch_index++] = all_line[order[8]][8] + '0';
-		ch[ch_index] = '\0';
-		ch_index = 0;
-		cout << ch;
+		ch[ch_index++] = all_line[order3[2]][8] + '0';
+		
+		if (ch_index > 10000)
+		{
+			ch[ch_index] = '\0';
+			cout << ch;
+			ch_index = 0;
+		}		
 		count++;
 		if (count == sum)
 		{
+			ch[ch_index] = '\0';
+			cout << ch;
+			ch_index = 0;
 			fclose(stdout);
 			exit(0);
 		}
-		putchar('\n'); putchar('\n');
+		ch[ch_index++] = '\n';
+		ch[ch_index++] = '\n';
 	}
 
 	void generate_sudoku()
@@ -67,21 +115,17 @@ private:
 			move_line(all_line[6], all_line[0], 2);
 			move_line(all_line[7], all_line[0], 5);
 			move_line(all_line[8], all_line[0], 8);
-			int order1[9] = { 0, 1, 2, 5, 4, 3, 8, 7, 6 };
-			int order2[9] = { 0, 1, 2, 8, 7, 6, 5, 4, 3 };
-			for (int i = 0; i < 6; i++)
+			for (int i = 0; i < 2; i++)
 			{
-				next_permutation(order1 + 3, order1 + 6);
-				next_permutation(order2 + 3, order2 + 6);
 				for (int j = 0; j < 6; j++)
 				{
-					next_permutation(order1 + 6, order1 + 9);
-					next_permutation(order2 + 6, order2 + 9);
-					write_into_file(order1);
-					write_into_file(order2);
+					for (int k = 0; k < 6; k++)
+					{
+						write_into_file(order1[i], order2[j], order3[k]);
+						write_into_file(order1[i], order3[j], order2[k]);
+					}
 				}
 			}
-
 		}
 	}
 
@@ -99,9 +143,10 @@ class SolveSudoku
 {
 private:
 	int sum;
-	int line_count = 0;
 	int puzzle[9][9];
 	int list[9] = { 1,2,3,4,5,6,7,8,9 };
+	char ch[10100];
+	int ch_index = 0;
 	clock_t start, end;
 	ofstream answer_file;
 	ifstream puzzle_file;
@@ -112,32 +157,7 @@ private:
 		set<int> n_set;
 		int n_sum;
 	};
-
-	void generate_points(point *p)
-	{
-		int start_i = (p->x / 3) * 3;
-		int start_j = (p->y / 3) * 3;
-
-		for (int i = start_i; i < start_i + 3; i++)
-		{
-			for (int j = start_j; j < start_j + 3; j++)
-			{
-				if ((*p).n_set.find(puzzle[i][j]) != (*p).n_set.end())
-					(*p).n_set.erase(puzzle[i][j]);
-			}
-		}
-		for (int i = 0; i < 9; i++)
-		{
-			if ((*p).n_set.find(puzzle[i][p->x]) != (*p).n_set.end())
-				(*p).n_set.erase(puzzle[i][p->y]);
-		}
-		for (int j = 0; j < 9; j++)
-		{
-			if ((*p).n_set.find(puzzle[p->x][j]) != (*p).n_set.end())
-				(*p).n_set.erase(puzzle[p->y][j]);
-		}
-		p->n_sum = (*p).n_set.size();
-	}
+	vector<point> possible_num_vector;
 
 	void write_into_file()
 	{
@@ -145,62 +165,96 @@ private:
 		{
 			for (int j = 0; j < 8; j++)
 			{
-				answer_file << puzzle[i][j] << ' ';
+				ch[ch_index++] = puzzle[i][j] + '0';
+				ch[ch_index++] = ' ';
 			}
-			answer_file << puzzle[i][8] << '\n';
+			ch[ch_index++] = puzzle[i][8] + '0';
+			ch[ch_index++] = '\n';
 		}
 		for (int j = 0; j < 8; j++)
 		{
-			answer_file << puzzle[8][j] << ' ';
+			ch[ch_index++] = puzzle[8][j] + '0';
+			ch[ch_index++] = ' ';
 		}
-		answer_file << puzzle[8][8];
+		ch[ch_index++] = puzzle[8][8] + '0';;
+		if (ch_index > 10000)
+		{
+			ch[ch_index] = '\0';
+			cout << ch;
+			ch_index = 0;
+		}
 	}
 
-	bool solve_puzzle(int i, int j)
+	void delete_impossible_num(int x, int y, set<int> *s)
 	{
-		while (puzzle[i][j] != 0)
+		int start_i = (x / 3) * 3;
+		int start_j = (y / 3) * 3;
+		for (int i = start_i; i < start_i + 3; i++)
 		{
-			if (j < 8) j = j + 1;
-			else if (i < 8)
+			for (int j = start_j; j < start_j + 3; j++)
 			{
-				j = 0;
-				i = i + 1;
-			}
-			else if (i == 8)
-			{
-				write_into_file();
-				return true;
+				if ((*s).find(puzzle[i][j]) != (*s).end())
+					(*s).erase(puzzle[i][j]);
 			}
 		}
-		point p;
-		p.x = i;
-		p.y = j;
-		for (int n = 1; n <= 9; n++)
-			p.n_set.insert(n);
-		generate_points(&p);
-		set<int>::iterator iter = p.n_set.begin();
-		while (iter != p.n_set.end())
+		for (int i = 0; i < 9; i++)
 		{
+			if ((*s).find(puzzle[i][y]) != (*s).end())
+				(*s).erase(puzzle[i][y]);
+		}
+		for (int j = 0; j < 9; j++)
+		{
+			if ((*s).find(puzzle[x][j]) != (*s).end())
+				(*s).erase(puzzle[x][j]);
+		}
+	}
+
+	bool solve_puzzle(int index)
+	{
+		if (index == possible_num_vector.size())
+		{
+			write_into_file();
+			return true;
+		}
+		int i = possible_num_vector[index].x;
+		int j = possible_num_vector[index].y;		
+		set<int> s = possible_num_vector[index].n_set;
+		delete_impossible_num(i, j, &s);
+		for (set<int>::iterator iter =s.begin(); iter != s.end(); iter++)
+		{			
 			puzzle[i][j] = *iter;
-			if (j < 8)
-			{
-				int r = solve_puzzle(i, j + 1);
-				if (r) return true;
-			}
-			else if (i < 8)
-			{
-				int	r = solve_puzzle(i + 1, 0);
-				if (r) return true;
-			}
-			else if (i == 8)
-			{
-				write_into_file();
-				return true;
-			}
-			iter++;
+			bool r = solve_puzzle(index + 1);
+			if (r) return true;
 		}
 		puzzle[i][j] = 0;
 		return false;
+	}
+
+	void generate_possible_num_vector()
+	{
+		for (int x = 0; x < 9; x++)
+		{
+			for (int y = 0; y < 9; y++)
+			{
+				if (puzzle[x][y] != 0) continue;
+				point p;
+				p.x = x;
+				p.y = y;
+				for (int i = 1; i <= 9; i++)
+					p.n_set.insert(i);
+				delete_impossible_num(x, y, &p.n_set);				
+				p.n_sum = p.n_set.size();
+				possible_num_vector.push_back(p);
+			}
+		}
+	}
+
+	//升序
+	static bool less_sort(const point &a, const point &b)
+	{
+		if(a.n_sum != b.n_sum) return (a.n_sum < b.n_sum);
+		else if (a.x != b.x)return (a.x < b.x);
+		else return (a.y < b.y);
 	}
 
 	void input_puzzle()
@@ -208,8 +262,11 @@ private:
 		bool first = true;
 		while (!puzzle_file.eof())
 		{
-			if (!first) answer_file << '\n' << '\n';
-			if (line_count != 0) answer_file << endl;
+			if (!first)
+			{
+				ch[ch_index++] = '\n';
+				ch[ch_index++] = '\n';
+			}
 			for (int i = 0; i < 9; i++)
 			{
 				for (int j = 0; j < 9; j++)
@@ -217,26 +274,28 @@ private:
 					puzzle_file >> puzzle[i][j];
 				}
 			}
-			solve_puzzle(0, 0);
+			generate_possible_num_vector();
+			sort(possible_num_vector.begin(), possible_num_vector.end(), less_sort);
+			solve_puzzle(0);
 			first = false;
 		}
+		ch[ch_index] = '\0';
+		cout << ch;
+		ch_index = 0;
+		fclose(stdout);
 		puzzle_file.close();
-		end = clock();
-		double duration = (double)(end - start) / CLOCKS_PER_SEC;
-		printf("%f seconds/n", duration);
 	}
 
 public:
-	SolveSudoku(string puzzle_file_path)
+	SolveSudoku(char* puzzle_file_path)
 	{
-		start = clock();
 		puzzle_file.open(puzzle_file_path, ios::in);
 		if (!puzzle_file)
 		{
-			printf("请输入正确的文件\n");
+			printf("请输入正确的文件路径\n");
 			exit(0);
 		}
-		answer_file.open("sudoku.txt", ios::out);
+		freopen("sudoku.txt", "w", stdout);
 		input_puzzle();
 	}
 };
