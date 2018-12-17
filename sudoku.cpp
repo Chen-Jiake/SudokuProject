@@ -12,31 +12,34 @@ using namespace std;
 class GenerateSudoku
 {
 private:
-	int all_line[9][9] = { 3, 9, 8, 7, 6, 5, 4, 2, 1 };
-	int count = 0;
-	int sum;
-	char ch[10100];
+	int all_line[9][9] = { 3, 9, 8, 7, 6, 5, 4, 2, 1 }; //存储数独终局
+	int count = 0;//行的数量
+	int sum;//需要生成的行的总数
+	char ch[100100];
 	int ch_index = 0;
 	int order1[2][2] = { 1, 2,
-						 2, 1 };
+		2, 1 };
 	int order2[6][3] = { 3, 4, 5,
-						 3, 5, 4,
-						 4, 3, 5,
-						 4, 5, 3,
-						 5, 3, 4,
-						 5, 4, 3 };
+		3, 5, 4,
+		4, 3, 5,
+		4, 5, 3,
+		5, 3, 4,
+		5, 4, 3 };
 	int order3[6][3] = { 6, 7, 8,
-						 6, 8, 7,
-						 7, 6, 8,
-						 7, 8, 6,
-						 8, 6, 7,
-						 8, 7, 6 };
+		6, 8, 7,
+		7, 6, 8,
+		7, 8, 6,
+		8, 6, 7,
+		8, 7, 6 };
+
+	//向右移动
 	void move_line(int a[9], int b[9], int num)
 	{
 		for (int i = 0; i < 9; i++)
 			a[(i + num) % 9] = b[i];
 	}
 
+	//写文件
 	void write_into_file(int order1[2], int order2[3], int order3[3])
 	{
 		for (int j = 0; j < 8; j++)
@@ -82,13 +85,13 @@ private:
 			ch[ch_index++] = ' ';
 		}
 		ch[ch_index++] = all_line[order3[2]][8] + '0';
-		
-		if (ch_index > 10000)
+
+		if (ch_index > 100000)
 		{
 			ch[ch_index] = '\0';
 			cout << ch;
 			ch_index = 0;
-		}		
+		}
 		count++;
 		if (count == sum)
 		{
@@ -142,22 +145,13 @@ public:
 class SolveSudoku
 {
 private:
-	int sum;
 	int puzzle[9][9];
-	int list[9] = { 1,2,3,4,5,6,7,8,9 };
-	char ch[10100];
+	char ch[100100];
 	int ch_index = 0;
-	clock_t start, end;
-	ofstream answer_file;
+	bool row[9][9];
+	bool column[9][9];
+	bool grid[9][9];
 	ifstream puzzle_file;
-	struct point
-	{
-		int x;
-		int y;
-		set<int> n_set;
-		int n_sum;
-	};
-	vector<point> possible_num_vector;
 
 	void write_into_file()
 	{
@@ -177,7 +171,7 @@ private:
 			ch[ch_index++] = ' ';
 		}
 		ch[ch_index++] = puzzle[8][8] + '0';;
-		if (ch_index > 10000)
+		if (ch_index > 100000)
 		{
 			ch[ch_index] = '\0';
 			cout << ch;
@@ -185,76 +179,49 @@ private:
 		}
 	}
 
-	void delete_impossible_num(int x, int y, set<int> *s)
+	bool solve_puzzle(int i, int j)
 	{
-		int start_i = (x / 3) * 3;
-		int start_j = (y / 3) * 3;
-		for (int i = start_i; i < start_i + 3; i++)
+		while (puzzle[i][j] != 0)
 		{
-			for (int j = start_j; j < start_j + 3; j++)
+			if (j < 8) j = j + 1;
+			else if (i < 8)
 			{
-				if ((*s).find(puzzle[i][j]) != (*s).end())
-					(*s).erase(puzzle[i][j]);
+				j = 0;
+				i = i + 1;
+			}
+			else if (i == 8)
+			{
+				write_into_file();
+				return true;
 			}
 		}
-		for (int i = 0; i < 9; i++)
+		for (int x = 1; x <= 9; x++)
 		{
-			if ((*s).find(puzzle[i][y]) != (*s).end())
-				(*s).erase(puzzle[i][y]);
-		}
-		for (int j = 0; j < 9; j++)
-		{
-			if ((*s).find(puzzle[x][j]) != (*s).end())
-				(*s).erase(puzzle[x][j]);
-		}
-	}
-
-	bool solve_puzzle(int index)
-	{
-		if (index == possible_num_vector.size())
-		{
-			write_into_file();
-			return true;
-		}
-		int i = possible_num_vector[index].x;
-		int j = possible_num_vector[index].y;		
-		set<int> s = possible_num_vector[index].n_set;
-		delete_impossible_num(i, j, &s);
-		for (set<int>::iterator iter =s.begin(); iter != s.end(); iter++)
-		{			
-			puzzle[i][j] = *iter;
-			bool r = solve_puzzle(index + 1);
-			if (r) return true;
+			if (!row[i][x - 1] && !column[j][x - 1] && !grid[i / 3 * 3 + j / 3][x - 1])
+			{
+				puzzle[i][j] = x;
+				row[i][x - 1] = column[j][x - 1] = grid[i / 3 * 3 + j / 3][x - 1] = true;
+				if (j < 8)
+				{
+					int r = solve_puzzle(i, j + 1);
+					if (r) return true;
+					else row[i][x - 1] = column[j][x - 1] = grid[i / 3 * 3 + j / 3][x - 1] = false;
+				}
+				else if (i < 8)
+				{
+					int	r = solve_puzzle(i + 1, 0);
+					if (r) return true;
+					else row[i][x - 1] = column[j][x - 1] = grid[i / 3 * 3 + j / 3][x - 1] = false;
+				}
+				else if (i == 8)
+				{
+					write_into_file();
+					return true;
+				}
+			}
 		}
 		puzzle[i][j] = 0;
 		return false;
-	}
-
-	void generate_possible_num_vector()
-	{
-		for (int x = 0; x < 9; x++)
-		{
-			for (int y = 0; y < 9; y++)
-			{
-				if (puzzle[x][y] != 0) continue;
-				point p;
-				p.x = x;
-				p.y = y;
-				for (int i = 1; i <= 9; i++)
-					p.n_set.insert(i);
-				delete_impossible_num(x, y, &p.n_set);				
-				p.n_sum = p.n_set.size();
-				possible_num_vector.push_back(p);
-			}
-		}
-	}
-
-	//升序
-	static bool less_sort(const point &a, const point &b)
-	{
-		if(a.n_sum != b.n_sum) return (a.n_sum < b.n_sum);
-		else if (a.x != b.x)return (a.x < b.x);
-		else return (a.y < b.y);
 	}
 
 	void input_puzzle()
@@ -267,16 +234,23 @@ private:
 				ch[ch_index++] = '\n';
 				ch[ch_index++] = '\n';
 			}
+			memset(row, false, sizeof(row));
+			memset(column, false, sizeof(column));
+			memset(grid, false, sizeof(grid));
 			for (int i = 0; i < 9; i++)
 			{
 				for (int j = 0; j < 9; j++)
 				{
 					puzzle_file >> puzzle[i][j];
+					if (puzzle[i][j])
+					{
+						row[i][puzzle[i][j] - 1] = true;
+						column[j][puzzle[i][j] - 1] = true;
+						grid[i / 3 * 3 + j / 3][puzzle[i][j] - 1] = true;
+					}
 				}
 			}
-			generate_possible_num_vector();
-			sort(possible_num_vector.begin(), possible_num_vector.end(), less_sort);
-			solve_puzzle(0);
+			solve_puzzle(0, 0);
 			first = false;
 		}
 		ch[ch_index] = '\0';
