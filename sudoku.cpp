@@ -13,18 +13,21 @@ class GenerateSudoku
 {
 private:
 	int all_line[9][9] = { 3, 9, 8, 7, 6, 5, 4, 2, 1 }; //存储数独终局
-	int count = 0;//行的数量
-	int sum;//需要生成的行的总数
-	char ch[100100];
-	int ch_index = 0;
+	int count = 0;    //行的数量
+	int sum;          //需要生成的行的总数
+	char ch[100100];  //存储生成的数独终局
+	int ch_index = 0; //数组的索引
+					  //（2，3）行的交换
 	int order1[2][2] = { 1, 2,
 		2, 1 };
+	//（4，5，6）行的交换
 	int order2[6][3] = { 3, 4, 5,
 		3, 5, 4,
 		4, 3, 5,
 		4, 5, 3,
 		5, 3, 4,
 		5, 4, 3 };
+	//（7，8，9）行的交换
 	int order3[6][3] = { 6, 7, 8,
 		6, 8, 7,
 		7, 6, 8,
@@ -105,6 +108,7 @@ private:
 		ch[ch_index++] = '\n';
 	}
 
+	//生成数独
 	void generate_sudoku()
 	{
 		while (1)
@@ -133,7 +137,7 @@ private:
 	}
 
 public:
-	GenerateSudoku(int sum)
+	GenerateSudoku(int sum)//构造函数
 	{
 		count = 0;
 		this->sum = sum;
@@ -145,21 +149,14 @@ public:
 class SolveSudoku
 {
 private:
-	int puzzle[9][9];
-	char ch[100100];
-	int ch_index = 0;
-	bool row[9][9];
-	bool column[9][9];
-	bool grid[9][9];
-	ifstream puzzle_file;
-	struct point
-	{
-		int x;
-		int y;
-		int n_sum;
-	};
-	vector<point> possible_num_vector;
+	int puzzle[9][9];  //存储数独问题
+	char ch[100100];   //存储生成的数独终局
+	int ch_index;      //数组的索引
+	bool row[9][9];    //row[i][j]判断第i行是否已使用j
+	bool column[9][9]; //column[i][j]判断第i列是否已使用j
+	bool grid[9][9];   //grid[i][j]判断第i个九宫格是否已使用j
 
+	//写文件
 	void write_into_file()
 	{
 		for (int i = 0; i < 8; i++)
@@ -186,102 +183,103 @@ private:
 		}
 	}
 
-	bool solve_puzzle(int index)
+	//求解数独
+	bool solve_puzzle(int i, int j)
 	{
-		if (index == possible_num_vector.size())
+		while (puzzle[i][j] != 0)
 		{
-			write_into_file();
-			return true;
+			if (j < 8) j++;
+			else if (i < 8)
+			{
+				j = 0;
+				i++;
+			}
+			else if (i == 8)
+			{
+				write_into_file();
+				return true;
+			}
 		}
-		int i = possible_num_vector[index].x;
-		int j = possible_num_vector[index].y;
 		for (int x = 1; x <= 9; x++)
 		{
 			if (!row[i][x - 1] && !column[j][x - 1] && !grid[i / 3 * 3 + j / 3][x - 1])
 			{
 				puzzle[i][j] = x;
 				row[i][x - 1] = column[j][x - 1] = grid[i / 3 * 3 + j / 3][x - 1] = true;
-				bool r = solve_puzzle(index + 1);
-				if (r) return true;
-				else row[i][x - 1] = column[j][x - 1] = grid[i / 3 * 3 + j / 3][x - 1] = false;
+				if (j < 8)
+				{
+					int r = solve_puzzle(i, j + 1);
+					if (r) return true;
+					else row[i][x - 1] = column[j][x - 1] = grid[i / 3 * 3 + j / 3][x - 1] = false;
+				}
+				else if (i < 8)
+				{
+					int	r = solve_puzzle(i + 1, 0);
+					if (r) return true;
+					else row[i][x - 1] = column[j][x - 1] = grid[i / 3 * 3 + j / 3][x - 1] = false;
+				}
+				else if (i == 8)
+				{
+					write_into_file();
+					return true;
+				}
 			}
 		}
 		puzzle[i][j] = 0;
 		return false;
 	}
 
-	void generate_possible_num_vector()
-	{
-		for (int x = 0; x < 9; x++)
-		{
-			for (int y = 0; y < 9; y++)
-			{
-				if (puzzle[x][y] != 0) continue;
-				point p;
-				p.x = x;
-				p.y = y;
-				p.n_sum = 9;
-				for (int i = 0; i < 9; i++)
-				{
-					if (row[x][i] || column[y][i] || grid[x / 3 * 3 + y / 3][i])
-						p.n_sum--;
-				}
-				possible_num_vector.push_back(p);
-			}
-		}
-	}
-
-	static bool less_sort(const point &a, const point &b)
-	{
-		if (a.n_sum != b.n_sum) return (a.n_sum < b.n_sum);
-		else if (a.x != b.x)return (a.x < b.x);
-		else return (a.y < b.y);
-	}
-
+	//读入数独问题
 	void input_puzzle()
 	{
 		bool first = true;
-		while (!puzzle_file.eof())
+		int temp;
+		int i = 0, j = 0;
+		ch_index = 0;
+		while (scanf("%d", &temp) != EOF)
 		{
-			if (!first)
+			if (i == 0 && j == 0)
 			{
-				ch[ch_index++] = '\n';
-				ch[ch_index++] = '\n';
-			}
-			memset(row, false, sizeof(row));
-			memset(column, false, sizeof(column));
-			memset(grid, false, sizeof(grid));
-			possible_num_vector.clear();
-			for (int i = 0; i < 9; i++)
-			{
-				for (int j = 0; j < 9; j++)
+				if (!first)
 				{
-					puzzle_file >> puzzle[i][j];
-					if (puzzle[i][j])
-					{
-						row[i][puzzle[i][j] - 1] = true;
-						column[j][puzzle[i][j] - 1] = true;
-						grid[i / 3 * 3 + j / 3][puzzle[i][j] - 1] = true;
-					}
+					ch[ch_index++] = '\n';
+					ch[ch_index++] = '\n';
 				}
+				memset(row, false, sizeof(row));
+				memset(column, false, sizeof(column));
+				memset(grid, false, sizeof(grid));
+				first = false;
 			}
-			generate_possible_num_vector();
-			sort(possible_num_vector.begin(), possible_num_vector.end(), less_sort);
-			solve_puzzle(0);
-			first = false;
+			puzzle[i][j] = temp;
+			if (temp)
+			{
+				row[i][temp - 1] = true;
+				column[j][temp - 1] = true;
+				grid[i / 3 * 3 + j / 3][temp - 1] = true;
+			}
+			if (j < 8) j++;
+			else if (i < 8)
+			{
+				i++;
+				j = 0;
+			}
+			else
+			{
+				solve_puzzle(0, 0);
+				i = j = 0;
+			}
 		}
 		ch[ch_index] = '\0';
 		cout << ch;
 		ch_index = 0;
 		fclose(stdout);
-		puzzle_file.close();
+		fclose(stdin);
 	}
 
 public:
-	SolveSudoku(char* puzzle_file_path)
+	SolveSudoku(char* puzzle_file_path) //构造函数
 	{
-		puzzle_file.open(puzzle_file_path, ios::in);
-		if (!puzzle_file)
+		if (!freopen(puzzle_file_path, "r", stdin))
 		{
 			printf("请输入正确的文件路径\n");
 			exit(0);
