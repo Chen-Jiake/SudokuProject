@@ -12,38 +12,51 @@ using namespace std;
 class GenerateSudoku
 {
 private:
-	int all_line[9][9] = { 3, 9, 8, 7, 6, 5, 4, 2, 1 }; //存储数独终局
-	int count = 0;    //行的数量
-	int sum;          //需要生成的行的总数
-	char ch[100100];  //存储生成的数独终局
-	int ch_index = 0; //数组的索引
-					  //（2，3）行的交换
-	int order1[2][2] = { 1, 2,
+	int first_line[9] = { 3, 9, 8, 7, 6, 5, 4, 2, 1 }; //终局第一行
+	int sum;          //需要生成的终局总数
+	char *ch;		  //存储生成的数独终局
+	int ch_index;     //数组的索引
+	//（2，3）行的交换
+	int order1[2][2] =
+	{ 1, 2,
 		2, 1 };
 	//（4，5，6）行的交换
-	int order2[6][3] = { 3, 4, 5,
+	int order2[6][3] =
+	{ 3, 4, 5,
 		3, 5, 4,
 		4, 3, 5,
 		4, 5, 3,
 		5, 3, 4,
 		5, 4, 3 };
 	//（7，8，9）行的交换
-	int order3[6][3] = { 6, 7, 8,
+	int order3[6][3] =
+	{ 6, 7, 8,
 		6, 8, 7,
 		7, 6, 8,
 		7, 8, 6,
 		8, 6, 7,
 		8, 7, 6 };
+	//第一行向右移动的位数
+	int move[9] = { 0, 3, 6, 1, 4, 7, 2, 5, 8 };
 
-	//向右移动
-	void move_line(int a[9], int b[9], int num)
+	//将第一行向右移动得到数独终局
+	int** move_line(int b[9])
 	{
+		int **a = (int **)malloc(9 * sizeof(int *));
 		for (int i = 0; i < 9; i++)
-			a[(i + num) % 9] = b[i];
+			a[i] = (int *)malloc(9 * sizeof(int));
+		for (int i = 0; i < 9; i++)
+		{
+			for (int j = 0; j < 9; j++)
+			{
+				a[i][(j + move[i]) % 9] = b[j];
+			}
+		}
+		return a;
 	}
 
-	//写文件
-	void write_into_file(int order1[2], int order2[3], int order3[3])
+	//将生成的数独终局加入到数组中
+	void add_into_ch(int** all_line, int order1[2], int order2[3], int order3[3])
 	{
 		for (int j = 0; j < 8; j++)
 		{
@@ -88,76 +101,76 @@ private:
 			ch[ch_index++] = ' ';
 		}
 		ch[ch_index++] = all_line[order3[2]][8] + '0';
+	}
 
-		if (ch_index > 100000)
-		{
-			ch[ch_index] = '\0';
-			cout << ch;
-			ch_index = 0;
-		}
-		count++;
-		if (count == sum)
-		{
-			ch[ch_index] = '\0';
-			cout << ch;
-			ch_index = 0;
-			fclose(stdout);
-			exit(0);
-		}
-		ch[ch_index++] = '\n';
-		ch[ch_index++] = '\n';
+public:
+	//写入文件
+	void write_into_file()
+	{
+		ch[ch_index] = '\0';
+		cout << ch;
+		fclose(stdout);
 	}
 
 	//生成数独
 	void generate_sudoku()
 	{
+		int count = 0;        //已生成的终局数量
+		bool first = true;    //判断是不是第一行
 		while (1)
 		{
-			next_permutation(all_line[0] + 1, all_line[0] + 9);
-			move_line(all_line[1], all_line[0], 3);
-			move_line(all_line[2], all_line[0], 6);
-			move_line(all_line[3], all_line[0], 1);
-			move_line(all_line[4], all_line[0], 4);
-			move_line(all_line[5], all_line[0], 7);
-			move_line(all_line[6], all_line[0], 2);
-			move_line(all_line[7], all_line[0], 5);
-			move_line(all_line[8], all_line[0], 8);
+			next_permutation(first_line + 1, first_line + 9);
+			int** all_line = move_line(first_line);
 			for (int i = 0; i < 2; i++)
 			{
 				for (int j = 0; j < 6; j++)
 				{
 					for (int k = 0; k < 6; k++)
 					{
-						write_into_file(order1[i], order2[j], order3[k]);
-						write_into_file(order1[i], order3[j], order2[k]);
+						if (first) first = false;
+						else
+						{
+							ch[ch_index++] = '\n'; ch[ch_index++] = '\n';
+						}
+						add_into_ch(all_line, order1[i], order2[j], order3[k]);
+						count++;
+						if (count == sum) return;
+						ch[ch_index++] = '\n'; ch[ch_index++] = '\n';
+						add_into_ch(all_line, order1[i], order3[j], order2[k]);
+						count++;
+						if (count == sum) return;
 					}
 				}
 			}
 		}
 	}
-
-public:
-	GenerateSudoku(int sum)//构造函数
+	//构造函数
+	GenerateSudoku(int sum)
 	{
-		count = 0;
+		ch = new char[163000010];
 		this->sum = sum;
+		ch_index = 0;
 		freopen("sudoku.txt", "w", stdout);
-		generate_sudoku();
 	}
+	//析构函数
+	~GenerateSudoku()
+	{
+		delete[] ch;
+ 	}
 };
 
 class SolveSudoku
 {
 private:
 	int puzzle[9][9];  //存储数独问题
-	char ch[100100];   //存储生成的数独终局
+	char *ch;   //存储生成的数独终局
 	int ch_index;      //数组的索引
 	bool row[9][9];    //row[i][j]判断第i行是否已使用j
 	bool column[9][9]; //column[i][j]判断第i列是否已使用j
 	bool grid[9][9];   //grid[i][j]判断第i个九宫格是否已使用j
 
-	//写文件
-	void write_into_file()
+	//将生成的数独终局加入到数组中
+	void add_into_ch()
 	{
 		for (int i = 0; i < 8; i++)
 		{
@@ -175,12 +188,6 @@ private:
 			ch[ch_index++] = ' ';
 		}
 		ch[ch_index++] = puzzle[8][8] + '0';;
-		if (ch_index > 100000)
-		{
-			ch[ch_index] = '\0';
-			cout << ch;
-			ch_index = 0;
-		}
 	}
 
 	//求解数独
@@ -196,7 +203,7 @@ private:
 			}
 			else if (i == 8)
 			{
-				write_into_file();
+				add_into_ch();
 				return true;
 			}
 		}
@@ -220,7 +227,7 @@ private:
 				}
 				else if (i == 8)
 				{
-					write_into_file();
+					add_into_ch();
 					return true;
 				}
 			}
@@ -229,13 +236,13 @@ private:
 		return false;
 	}
 
+public:
 	//读入数独问题
 	void input_puzzle()
 	{
-		bool first = true;
-		int temp;
-		int i = 0, j = 0;
-		ch_index = 0;
+		bool first = true;  //判断是不是第一行
+		int temp;			//临时存储输入的数字
+		int i = 0, j = 0;   //puzzle数组的索引
 		while (scanf("%d", &temp) != EOF)
 		{
 			if (i == 0 && j == 0)
@@ -269,23 +276,32 @@ private:
 				i = j = 0;
 			}
 		}
+	}
+
+	//写入文件
+	void write_into_file()
+	{
 		ch[ch_index] = '\0';
 		cout << ch;
-		ch_index = 0;
 		fclose(stdout);
 		fclose(stdin);
 	}
 
-public:
 	SolveSudoku(char* puzzle_file_path) //构造函数
 	{
+		ch = new char[163000010];
 		if (!freopen(puzzle_file_path, "r", stdin))
 		{
 			printf("请输入正确的文件路径\n");
-			exit(0);
+			return;
 		}
+		ch_index = 0;
 		freopen("sudoku.txt", "w", stdout);
-		input_puzzle();
+	}
+
+	~SolveSudoku() //析构函数
+	{
+		delete[] ch;
 	}
 };
 
@@ -306,16 +322,24 @@ int main(int argc, char* argv[])
 				else
 				{
 					printf("请输入数字\n");
-					break;
+					return 0;
 				}
 			}
 			GenerateSudoku gen(gen_sum);
+			gen.generate_sudoku();
+			gen.write_into_file();
 		}
 		else if (strcmp(argv[1], "-s") == 0)
 		{
 			SolveSudoku slv(argv[2]);
+			slv.input_puzzle();
+			slv.write_into_file();
 		}
-		else printf("请输入正确指令\n");
+		else
+		{
+			printf("请输入正确指令\n");
+			return 0;
+		}
 	}
 	else printf("请输入正确指令\n");
 }
