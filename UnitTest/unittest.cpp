@@ -113,13 +113,13 @@ namespace UnitTest1
 
 		TEST_METHOD(TestSolveValidFilepath)
 		{
-			SolveSudoku slv("../UnitTest1/test_puzzle.txt");
+			SolveSudoku slv("../UnitTest/test_puzzle.txt");
 			Assert::AreEqual(slv.puzzle_file != NULL, true);
 		}
 
 		TEST_METHOD(TestInputPuzzle)
 		{
-			SolveSudoku slv("../UnitTest1/test_input.txt");
+			SolveSudoku slv("../UnitTest/test_input.txt");
 			slv.input_puzzle();
 			bool f = true;
 			for (int i = 1; i <= 9; i++)
@@ -129,7 +129,7 @@ namespace UnitTest1
 
 		TEST_METHOD(TestSolveInputAndSolvePuzzle)
 		{
-			SolveSudoku slv("../UnitTest1/test_puzzle.txt");
+			SolveSudoku slv("../UnitTest/test_puzzle.txt");
 			slv.input_puzzle();
 			bool row[9][9];		//row[i][j]判断第i行是否已使用j
 			bool column[9][9];	//column[i][j]判断第i列是否已使用j
@@ -158,7 +158,7 @@ namespace UnitTest1
 
 		TEST_METHOD(TestSolveAddIntoCh)
 		{
-			SolveSudoku slv("../UnitTest1/test_puzzle.txt");
+			SolveSudoku slv("../UnitTest/test_puzzle.txt");
 			memcpy(slv.puzzle, expect_all_line, sizeof(expect_all_line));
 			slv.add_into_ch();
 			slv.ch[slv.ch_index] = '\0';
