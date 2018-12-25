@@ -156,18 +156,19 @@ public:
 	~GenerateSudoku()
 	{
 		delete[] ch;
- 	}
+	}
 };
 
 class SolveSudoku
 {
 private:
-	int puzzle[9][9];  //存储数独问题
-	char *ch;   //存储生成的数独终局
-	int ch_index;      //数组的索引
-	bool row[9][9];    //row[i][j]判断第i行是否已使用j
-	bool column[9][9]; //column[i][j]判断第i列是否已使用j
-	bool grid[9][9];   //grid[i][j]判断第i个九宫格是否已使用j
+	int puzzle[9][9];	//存储数独问题
+	char *ch;			//存储生成的数独终局
+	int ch_index;		//数组的索引
+	bool row[9][9];		//row[i][j]判断第i行是否已使用j
+	bool column[9][9];	//column[i][j]判断第i列是否已使用j
+	bool grid[9][9];	//grid[i][j]判断第i个九宫格是否已使用j
+	FILE *puzzle_file;	//输入文件
 
 	//将生成的数独终局加入到数组中
 	void add_into_ch()
@@ -241,11 +242,12 @@ public:
 	void input_puzzle()
 	{
 		bool first = true;  //判断是不是第一行
-		int temp;			//临时存储输入的数字
-		int i = 0, j = 0;   //puzzle数组的索引
-		while (scanf("%d", &temp) != EOF)
+		char temp[20];		//临时存储输入的数字
+		int line= 0;        //输入的是第几行
+		while (gets_s(temp))
 		{
-			if (i == 0 && j == 0)
+			if (strlen(temp) == 0) continue;
+			if (line == 0)
 			{
 				if (!first)
 				{
@@ -257,23 +259,25 @@ public:
 				memset(grid, false, sizeof(grid));
 				first = false;
 			}
-			puzzle[i][j] = temp;
-			if (temp)
+			for (int j = 0; j < 17; j++)
 			{
-				row[i][temp - 1] = true;
-				column[j][temp - 1] = true;
-				grid[i / 3 * 3 + j / 3][temp - 1] = true;
+				if (temp[j] != ' ')
+				{
+					int temp_num = temp[j] - '0';
+					puzzle[line][j / 2] = temp_num;		
+					if (temp_num)
+					{
+						row[line][temp_num - 1] = true;
+						column[j / 2][temp_num - 1] = true;
+						grid[line / 3 * 3 + j / 6][temp_num - 1] = true;
+					}
+				}
 			}
-			if (j < 8) j++;
-			else if (i < 8)
-			{
-				i++;
-				j = 0;
-			}
-			else
+			line++;
+			if (line == 9)
 			{
 				solve_puzzle(0, 0);
-				i = j = 0;
+				line = 0;
 			}
 		}
 	}
@@ -290,7 +294,8 @@ public:
 	SolveSudoku(char* puzzle_file_path) //构造函数
 	{
 		ch = new char[163000010];
-		if (!freopen(puzzle_file_path, "r", stdin))
+		puzzle_file = freopen(puzzle_file_path, "r", stdin);
+		if (!puzzle_file)
 		{
 			printf("请输入正确的文件路径\n");
 			return;
