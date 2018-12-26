@@ -5,13 +5,12 @@
 #include<fstream>
 #include<algorithm>
 #include<ctime>
-#include<set>
 #include<vector>
 using namespace std;
 
 class GenerateSudoku
 {
-private:
+public:
 	int first_line[9] = { 3, 9, 8, 7, 6, 5, 4, 2, 1 }; //终局第一行
 	int sum;          //需要生成的终局总数
 	char *ch;		  //存储生成的数独终局
@@ -58,6 +57,7 @@ private:
 	//将生成的数独终局加入到数组中
 	void add_into_ch(int** all_line, int order1[2], int order2[3], int order3[3])
 	{
+		//第1行
 		for (int j = 0; j < 8; j++)
 		{
 			ch[ch_index++] = all_line[0][j] + '0';
@@ -65,6 +65,8 @@ private:
 		}
 		ch[ch_index++] = all_line[0][8] + '0';
 		ch[ch_index++] = '\n';
+		
+		//第2-3行
 		for (int i = 0; i < 2; i++)
 		{
 			for (int j = 0; j < 8; j++)
@@ -75,6 +77,8 @@ private:
 			ch[ch_index++] = all_line[order1[i]][8] + '0';
 			ch[ch_index++] = '\n';
 		}
+
+		//第4-6行
 		for (int i = 0; i < 3; i++)
 		{
 			for (int j = 0; j < 8; j++)
@@ -85,6 +89,8 @@ private:
 			ch[ch_index++] = all_line[order2[i]][8] + '0';
 			ch[ch_index++] = '\n';
 		}
+
+		//第7-8行
 		for (int i = 0; i < 2; i++)
 		{
 			for (int j = 0; j < 8; j++)
@@ -95,6 +101,8 @@ private:
 			ch[ch_index++] = all_line[order3[i]][8] + '0';
 			ch[ch_index++] = '\n';
 		}
+
+		//第9行
 		for (int j = 0; j < 8; j++)
 		{
 			ch[ch_index++] = all_line[order3[2]][j] + '0';
@@ -103,7 +111,6 @@ private:
 		ch[ch_index++] = all_line[order3[2]][8] + '0';
 	}
 
-public:
 	//写入文件
 	void write_into_file()
 	{
@@ -117,35 +124,35 @@ public:
 	{
 		int count = 0;        //已生成的终局数量
 		bool first = true;    //判断是不是第一行
-		while (1)
+		while (true)
 		{
-			next_permutation(first_line + 1, first_line + 9);
-			int** all_line = move_line(first_line);
+			next_permutation(first_line + 1, first_line + 9); //全排列生成第一行的数字
+			int** all_line = move_line(first_line);  //调用move_line函数，通过将第一行向右移动获得数独终局
 			for (int i = 0; i < 2; i++)
 			{
 				for (int j = 0; j < 6; j++)
 				{
 					for (int k = 0; k < 6; k++)
 					{
-						if (first) first = false;
-						else
+						if (first) first = false;   
+						else													//如果不是第一行，需要在字符串中增加两个回车（终局与终局之间的空行）
 						{
 							ch[ch_index++] = '\n'; ch[ch_index++] = '\n';
 						}
-						add_into_ch(all_line, order1[i], order2[j], order3[k]);
-						count++;
-						if (count == sum) return;
-						ch[ch_index++] = '\n'; ch[ch_index++] = '\n';
-						add_into_ch(all_line, order1[i], order3[j], order2[k]);
-						count++;
-						if (count == sum) return;
+						add_into_ch(all_line, order1[i], order2[j], order3[k]); //按照order的顺序将行加入字符串中
+						count++;                                                //生成的终局数+1
+						if (count == sum) return;                               //如果已达到生成数量要求就返回
+						ch[ch_index++] = '\n'; ch[ch_index++] = '\n';           //终局与终局之间的空行
+						add_into_ch(all_line, order1[i], order3[j], order2[k]); //按照order的顺序将行加入字符串中
+						count++;                                                //生成的终局数+1
+						if (count == sum) return;                               //如果已达到生成数量要求就返回
 					}
 				}
 			}
 		}
 	}
 	//构造函数
-	GenerateSudoku(int sum)
+	GenerateSudoku(const int sum)
 	{
 		ch = new char[163000010];
 		this->sum = sum;
@@ -161,7 +168,7 @@ public:
 
 class SolveSudoku
 {
-private:
+public:
 	int puzzle[9][9];	//存储数独问题
 	char *ch;			//存储生成的数独终局
 	int ch_index;		//数组的索引
@@ -173,6 +180,7 @@ private:
 	//将生成的数独终局加入到数组中
 	void add_into_ch()
 	{
+		//第1-8行
 		for (int i = 0; i < 8; i++)
 		{
 			for (int j = 0; j < 8; j++)
@@ -183,6 +191,8 @@ private:
 			ch[ch_index++] = puzzle[i][8] + '0';
 			ch[ch_index++] = '\n';
 		}
+
+		//第9行
 		for (int j = 0; j < 8; j++)
 		{
 			ch[ch_index++] = puzzle[8][j] + '0';
@@ -194,6 +204,7 @@ private:
 	//求解数独
 	bool solve_puzzle(int i, int j)
 	{
+		//若当前位置的值不为0，就按行寻找直到当前位置的值为0
 		while (puzzle[i][j] != 0)
 		{
 			if (j < 8) j++;
@@ -202,23 +213,23 @@ private:
 				j = 0;
 				i++;
 			}
-			else if (i == 8)
+			else if (i == 8)  //遍历到最后一个位置不为0，说明已经成功生成解
 			{
 				add_into_ch();
 				return true;
 			}
 		}
-		for (int x = 1; x <= 9; x++)
+		for (int x = 1; x <= 9; x++)  //用1到9为当前位置赋值
 		{
-			if (!row[i][x - 1] && !column[j][x - 1] && !grid[i / 3 * 3 + j / 3][x - 1])
+			if (!row[i][x - 1] && !column[j][x - 1] && !grid[i / 3 * 3 + j / 3][x - 1])  //符合数组的三条规则
 			{
-				puzzle[i][j] = x;
-				row[i][x - 1] = column[j][x - 1] = grid[i / 3 * 3 + j / 3][x - 1] = true;
+				puzzle[i][j] = x;      //为当前位置赋值
+				row[i][x - 1] = column[j][x - 1] = grid[i / 3 * 3 + j / 3][x - 1] = true;//在行、列、九宫格的相应位置进行标记
 				if (j < 8)
 				{
-					int r = solve_puzzle(i, j + 1);
+					int r = solve_puzzle(i, j + 1);  //r为true，说明成功生成解
 					if (r) return true;
-					else row[i][x - 1] = column[j][x - 1] = grid[i / 3 * 3 + j / 3][x - 1] = false;
+					else row[i][x - 1] = column[j][x - 1] = grid[i / 3 * 3 + j / 3][x - 1] = false; //发生错误，重置为false
 				}
 				else if (i < 8)
 				{
@@ -228,33 +239,33 @@ private:
 				}
 				else if (i == 8)
 				{
-					add_into_ch();
+					add_into_ch();   //最后一个位置成功赋值，说明解成功
 					return true;
 				}
 			}
 		}
-		puzzle[i][j] = 0;
-		return false;
+		puzzle[i][j] = 0; //1-9都不符合条件
+		return false;     //解失败
 	}
 
-public:
 	//读入数独问题
 	void input_puzzle()
 	{
-		bool first = true;  //判断是不是第一行
-		char temp[20];		//临时存储输入的数字
-		int line= 0;        //输入的是第几行
-		while (gets_s(temp))
+		bool first = true;   //判断是不是第一行
+		char temp[20];		 //临时存储输入的数字
+		int line= 0;         //输入的是第几行
+		while (gets_s(temp)) 
 		{
-			if (strlen(temp) == 0) continue;
-			if (line == 0)
+			if (strlen(temp) == 0) continue;  //跳过空行
+			if (line == 0)                    //如果是第一行
 			{
-				if (!first)
+				if (!first)                   //解之间的空行
 				{
 					ch[ch_index++] = '\n';
 					ch[ch_index++] = '\n';
 				}
-				memset(row, false, sizeof(row));
+				//初始化三个二维数组
+				memset(row, false, sizeof(row));          
 				memset(column, false, sizeof(column));
 				memset(grid, false, sizeof(grid));
 				first = false;
@@ -264,7 +275,7 @@ public:
 				if (temp[j] != ' ')
 				{
 					int temp_num = temp[j] - '0';
-					puzzle[line][j / 2] = temp_num;		
+					puzzle[line][j / 2] = temp_num;   //将输入的数字存入puzzle数组中
 					if (temp_num)
 					{
 						row[line][temp_num - 1] = true;
@@ -274,7 +285,7 @@ public:
 				}
 			}
 			line++;
-			if (line == 9)
+			if (line == 9)           //9行输入完成之后调用solve_puzzle求解问题
 			{
 				solve_puzzle(0, 0);
 				line = 0;
@@ -320,7 +331,7 @@ int main(int argc, char* argv[])
 			int gen_sum = 0;
 			for (int i = 0; i < len; i++)
 			{
-				if (argv[2][i] > '0' || argv[2][i] < '9')
+				if (argv[2][i] > '0' || argv[2][i] < '9')        //将数独终局的数量转变为数字
 				{
 					gen_sum = gen_sum * 10 + (argv[2][i] - '0');
 				}
